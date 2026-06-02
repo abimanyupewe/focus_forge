@@ -1,30 +1,39 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:focus_forge/features/schedule/presentation/pages/dashboard_page.dart';
+import 'package:focus_forge/features/schedule/presentation/view_models/dashboard_view_model.dart';
 
-import 'package:focus_forge/main.dart';
+class MockDashboardNotifier extends DashboardNotifier {
+  @override
+  DashboardState build() {
+    return DashboardState(
+      isLoading: false,
+      schedules: const [],
+      dailyDurations: const {},
+      streakDays: 0,
+    );
+  }
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('FocusForgeApp basic loading smoke test', (WidgetTester tester) async {
+    // Merender DashboardPage dengan provider yang telah di-override secara sinkron
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          dashboardViewModelProvider.overrideWith(() => MockDashboardNotifier()),
+        ],
+        child: const MaterialApp(
+          home: DashboardPage(),
+        ),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Pump frame untuk menyelesaikan semua animasi finit
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Memverifikasi teks 'FocusForge' berhasil dirender di AppBar/Header awal
+    expect(find.text('FocusForge'), findsOneWidget);
   });
 }

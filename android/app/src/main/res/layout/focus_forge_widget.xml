@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background_dark"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:baselineAligned="false">
+
+    <!-- Column 1: App Title & Streak -->
+    <LinearLayout
+        android:id="@+id/widget_col_left"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1.0"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingRight="8dp">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FocusForge"
+            android:textColor="#8095FF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Habit &amp; Focus"
+            android:textColor="#6C6E85"
+            android:textSize="10sp" />
+
+        <LinearLayout
+            android:id="@+id/widget_streak_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="#222538"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_streak"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔥 0 Hari"
+                android:textColor="#FFB74D"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Vertical Divider 1 -->
+    <FrameLayout
+        android:id="@+id/widget_divider_1"
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="#2A2C3E"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Column 2: Next Schedule -->
+    <LinearLayout
+        android:id="@+id/widget_col_middle"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1.2"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingLeft="12dp"
+        android:paddingRight="8dp">
+
+        <TextView
+            android:id="@+id/widget_schedule_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="JADWAL HARI INI"
+            android:textColor="#8E91A8"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <TextView
+            android:id="@+id/widget_schedule_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:text="Tidak Ada Jadwal"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_schedule_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Mulai buat jadwal baru!"
+            android:textColor="#A5A8C0"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Vertical Divider 2 -->
+    <FrameLayout
+        android:id="@+id/widget_divider_2"
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="#2A2C3E"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Column 3: Today's Tasks -->
+    <LinearLayout
+        android:id="@+id/widget_col_right"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1.4"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingLeft="12dp">
+
+        <TextView
+            android:id="@+id/widget_tasks_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TUGAS (0)"
+            android:textColor="#8E91A8"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <!-- Task Item 1 -->
+        <LinearLayout
+            android:id="@+id/widget_task_1_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/widget_task_1_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="☐"
+                android:textColor="#FFB74D"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/widget_task_1_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="Tidak ada tugas"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Task Item 2 -->
+        <LinearLayout
+            android:id="@+id/widget_task_2_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+            <TextView
+                android:id="@+id/widget_task_2_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="☐"
+                android:textColor="#FFB74D"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/widget_task_2_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text=""
+                android:textColor="#FFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Task Item 3 -->
+        <LinearLayout
+            android:id="@+id/widget_task_3_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+            <TextView
+                android:id="@+id/widget_task_3_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="☐"
+                android:textColor="#FFB74D"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/widget_task_3_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text=""
+                android:textColor="#FFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
