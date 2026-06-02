@@ -63,45 +63,53 @@ class NotificationService {
 
   /// Mendaftarkan alarm dual-trigger untuk sebuah jadwal belajar.
   static Future<void> registerScheduleAlarms(ScheduleModel schedule) async {
-    // Batalkan alarm lama jika ada sebelum mendaftarkan ulang
-    await cancelScheduleAlarms(schedule.uid);
+    try {
+      // Batalkan alarm lama jika ada sebelum mendaftarkan ulang
+      await cancelScheduleAlarms(schedule.uid);
 
-    if (!schedule.isActive) return;
+      if (!schedule.isActive) return;
 
-    for (final day in schedule.activeDays) {
-      // 1. Start Alarm (Waktunya Belajar)
-      await _scheduleWeeklyNotification(
-        id: _generateNotificationId(schedule.uid, day, 'start'),
-        title: 'Waktunya Belajar!',
-        body: 'Ayo mulai sesi belajar "${schedule.title}" sekarang!',
-        scheduledTime: _getNextOccurrence(day, schedule.startTime),
-        payload: '/timer/${schedule.uid}',
-      );
-
-      // 2. Wrap-up Alarm (Pengingat Sesi Hampir Selesai)
-      if (schedule.wrapUpAlarmEnabled) {
-        final wrapUpTime = schedule.endTime.subtract(
-          Duration(minutes: schedule.wrapUpMinutesBefore),
+      for (final day in schedule.activeDays) {
+        // 1. Start Alarm (Waktunya Belajar)
+        await _scheduleWeeklyNotification(
+          id: _generateNotificationId(schedule.uid, day, 'start'),
+          title: 'Waktunya Belajar!',
+          body: 'Ayo mulai sesi belajar "${schedule.title}" sekarang!',
+          scheduledTime: _getNextOccurrence(day, schedule.startTime),
+          payload: '/timer/${schedule.uid}',
         );
-        // Pastikan waktu wrap-up berada setelah start time
-        if (wrapUpTime.isAfter(schedule.startTime)) {
-          await _scheduleWeeklyNotification(
-            id: _generateNotificationId(schedule.uid, day, 'wrapup'),
-            title: 'Sesi Hampir Usai',
-            body: 'Selesaikan latihan terakhirmu untuk "${schedule.title}"',
-            scheduledTime: _getNextOccurrence(day, wrapUpTime),
-            payload: '/timer',
+
+        // 2. Wrap-up Alarm (Pengingat Sesi Hampir Selesai)
+        if (schedule.wrapUpAlarmEnabled) {
+          final wrapUpTime = schedule.endTime.subtract(
+            Duration(minutes: schedule.wrapUpMinutesBefore),
           );
+          // Pastikan waktu wrap-up berada setelah start time
+          if (wrapUpTime.isAfter(schedule.startTime)) {
+            await _scheduleWeeklyNotification(
+              id: _generateNotificationId(schedule.uid, day, 'wrapup'),
+              title: 'Sesi Hampir Usai',
+              body: 'Selesaikan latihan terakhirmu untuk "${schedule.title}"',
+              scheduledTime: _getNextOccurrence(day, wrapUpTime),
+              payload: '/timer',
+            );
+          }
         }
       }
+    } catch (e) {
+      print("Gagal mendaftarkan alarm jadwal: $e");
     }
   }
 
   /// Membatalkan seluruh alarm notifikasi terkait suatu jadwal.
   static Future<void> cancelScheduleAlarms(String scheduleUid) async {
-    for (int day = 0; day < 7; day++) {
-      await _plugin.cancel(id: _generateNotificationId(scheduleUid, day, 'start'));
-      await _plugin.cancel(id: _generateNotificationId(scheduleUid, day, 'wrapup'));
+    try {
+      for (int day = 0; day < 7; day++) {
+        await _plugin.cancel(id: _generateNotificationId(scheduleUid, day, 'start'));
+        await _plugin.cancel(id: _generateNotificationId(scheduleUid, day, 'wrapup'));
+      }
+    } catch (e) {
+      print("Gagal membatalkan alarm jadwal: $e");
     }
   }
 
@@ -113,16 +121,20 @@ class NotificationService {
     required tz.TZDateTime scheduledTime,
     required String payload,
   }) async {
-    await _plugin.zonedSchedule(
-      id: id,
-      title: title,
-      body: body,
-      scheduledDate: scheduledTime,
-      notificationDetails: _notificationDetails(),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-      payload: payload,
-    );
+    try {
+      await _plugin.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: scheduledTime,
+        notificationDetails: _notificationDetails(),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        payload: payload,
+      );
+    } catch (e) {
+      print("Gagal menjadwalkan notifikasi mingguan: $e");
+    }
   }
 
   /// Mendapatkan detail konfigurasi notifikasi tiap platform.
@@ -183,48 +195,56 @@ class NotificationService {
     int? remainingSeconds,
     bool isPaused = false,
   }) async {
-    final int? whenValue = (!isPaused && remainingSeconds != null)
-        ? (DateTime.now().millisecondsSinceEpoch + remainingSeconds * 1000)
-        : null;
+    try {
+      final int? whenValue = (!isPaused && remainingSeconds != null)
+          ? (DateTime.now().millisecondsSinceEpoch + remainingSeconds * 1000)
+          : null;
 
-    final androidDetails = AndroidNotificationDetails(
-      'focus_forge_timer',
-      'Timer Fokus',
-      channelDescription: 'Notifikasi status sesi pengatur waktu fokus FocusForge',
-      importance: Importance.max,
-      priority: Priority.high,
-      playSound: false, // Matikan suara berulang tiap detik jika di-update
-      enableVibration: false,
-      ongoing: !isPaused, // Membuat notifikasi tidak bisa di-swipe saat timer berjalan
-      onlyAlertOnce: true, // Hanya bunyikan/getarkan sekali saja di awal
-      showWhen: whenValue != null,
-      when: whenValue,
-      usesChronometer: whenValue != null,
-      chronometerCountDown: whenValue != null,
-    );
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: false,
-      presentSound: false,
-    );
-    final details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-    
-    // Gunakan ID tetap 999 untuk notifikasi timer agar tidak menumpuk
-    await _plugin.show(
-      id: 999,
-      title: title,
-      body: body,
-      notificationDetails: details,
-      payload: '/timer',
-    );
+      final androidDetails = AndroidNotificationDetails(
+        'focus_forge_timer',
+        'Timer Fokus',
+        channelDescription: 'Notifikasi status sesi pengatur waktu fokus FocusForge',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: false, // Matikan suara berulang tiap detik jika di-update
+        enableVibration: false,
+        ongoing: !isPaused, // Membuat notifikasi tidak bisa di-swipe saat timer berjalan
+        onlyAlertOnce: true, // Hanya bunyikan/getarkan sekali saja di awal
+        showWhen: whenValue != null,
+        when: whenValue,
+        usesChronometer: whenValue != null,
+        chronometerCountDown: whenValue != null,
+      );
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: false,
+        presentSound: false,
+      );
+      final details = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+      
+      // Gunakan ID tetap 999 untuk notifikasi timer agar tidak menumpuk
+      await _plugin.show(
+        id: 999,
+        title: title,
+        body: body,
+        notificationDetails: details,
+        payload: '/timer',
+      );
+    } catch (e) {
+      print("Gagal menampilkan notifikasi timer: $e");
+    }
   }
 
   /// Menghapus notifikasi status timer.
   static Future<void> dismissTimerNotification() async {
-    await _plugin.cancel(id: 999);
+    try {
+      await _plugin.cancel(id: 999);
+    } catch (e) {
+      print("Gagal menghapus notifikasi timer: $e");
+    }
   }
 
   /// Menampilkan notifikasi instan umum (misal saat sesi selesai).
@@ -233,30 +253,34 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    const androidDetails = AndroidNotificationDetails(
-      'focus_forge_instant',
-      'Notifikasi Instan',
-      channelDescription: 'Notifikasi instan untuk pencapaian sesi FocusForge',
-      importance: Importance.max,
-      priority: Priority.high,
-      playSound: true,
-      enableVibration: true,
-    );
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-    await _plugin.show(
-      id: id,
-      title: title,
-      body: body,
-      notificationDetails: details,
-    );
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        'focus_forge_instant',
+        'Notifikasi Instan',
+        channelDescription: 'Notifikasi instan untuk pencapaian sesi FocusForge',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+      );
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+      const details = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+      await _plugin.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: details,
+      );
+    } catch (e) {
+      print("Gagal menampilkan notifikasi instan: $e");
+    }
   }
 }
 

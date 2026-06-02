@@ -7,6 +7,8 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../timer/data/repositories/session_repository.dart';
 import '../../../timer/data/models/session_model.dart';
 import '../view_models/dashboard_view_model.dart';
+import '../../data/models/task_model.dart';
+import '../../data/repositories/task_repository.dart';
 
 class HeatmapDetailPage extends ConsumerStatefulWidget {
   final DateTime? initialSelectedDate;
@@ -26,6 +28,7 @@ class _HeatmapDetailPageState extends ConsumerState<HeatmapDetailPage> {
   String _periodFilter = 'Bulan Ini'; // Bulan Ini, 3 Bulan Terakhir, Tahun Ini
   
   List<SessionModel> _selectedDaySessions = [];
+  List<TaskModel> _selectedDayTasks = [];
   bool _isLoadingSessions = false;
 
   final List<String> _monthsIndonesian = [
@@ -52,9 +55,20 @@ class _HeatmapDetailPageState extends ConsumerState<HeatmapDetailPage> {
 
     try {
       final sessionRepo = ref.read(sessionRepositoryProvider);
+      final taskRepo = ref.read(taskRepositoryProvider);
+
       final sessions = await sessionRepo.getSessionsByDate(date);
+      final allTasks = await taskRepo.getAll();
+      final completedTasks = allTasks.where((task) {
+        if (!task.isCompleted || task.completedAt == null) return false;
+        return task.completedAt!.year == date.year &&
+               task.completedAt!.month == date.month &&
+               task.completedAt!.day == date.day;
+      }).toList();
+
       setState(() {
         _selectedDaySessions = sessions;
+        _selectedDayTasks = completedTasks;
         _isLoadingSessions = false;
       });
     } catch (e) {
@@ -331,7 +345,7 @@ class _HeatmapDetailPageState extends ConsumerState<HeatmapDetailPage> {
                         });
                       }
                     },
-                    selectedColor: isDark ? AppColors.darkPrimary.withOpacity(0.12) : AppColors.lightPrimary.withOpacity(0.12),
+                    selectedColor: isDark ? AppColors.darkPrimary.withValues(alpha: 0.12) : AppColors.lightPrimary.withValues(alpha: 0.12),
                     backgroundColor: Colors.transparent,
                     side: BorderSide(
                       color: isSelected
@@ -375,7 +389,7 @@ class _HeatmapDetailPageState extends ConsumerState<HeatmapDetailPage> {
                           });
                         }
                       },
-                      selectedColor: isDark ? AppColors.darkPrimary.withOpacity(0.12) : AppColors.lightPrimary.withOpacity(0.12),
+                      selectedColor: isDark ? AppColors.darkPrimary.withValues(alpha: 0.12) : AppColors.lightPrimary.withValues(alpha: 0.12),
                       backgroundColor: Colors.transparent,
                       side: BorderSide(
                         color: isSelected
@@ -757,7 +771,7 @@ class _HeatmapDetailPageState extends ConsumerState<HeatmapDetailPage> {
                   child: _buildSkeletonCard(context, isDark),
                 )),
               )
-            else if (_selectedDaySessions.isEmpty)
+            else if (_selectedDaySessions.isEmpty && _selectedDayTasks.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
                 child: Center(
@@ -766,14 +780,14 @@ class _HeatmapDetailPageState extends ConsumerState<HeatmapDetailPage> {
                       Icon(Icons.hourglass_empty_rounded, size: 48, color: Colors.grey[500]),
                       const SizedBox(height: AppSpacing.md),
                       Text(
-                        'Tidak Ada Sesi Belajar',
+                        'Tidak Ada Aktivitas',
                         style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold, color: Colors.grey),
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                         child: Text(
-                          'Mulai fokus dengan timer untuk mengisi kontribusi Anda!',
+                          'Mulai fokus dengan timer atau selesaikan tugas untuk mengisi kontribusi Anda!',
                           textAlign: TextAlign.center,
                           style: AppTypography.bodySmall.copyWith(color: Colors.grey[500]),
                         ),
@@ -783,81 +797,175 @@ class _HeatmapDetailPageState extends ConsumerState<HeatmapDetailPage> {
                 ),
               )
             else ...[
-              Text(
-                'Daftar Sesi Fokus (${_selectedDaySessions.length})',
-                style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold, color: primaryColor),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _selectedDaySessions.length,
-                itemBuilder: (context, index) {
-                  final s = _selectedDaySessions[index];
-                  final durationMin = (s.actualDurationSeconds > 0 && s.actualDurationSeconds < 60) ? 1 : s.actualDurationSeconds ~/ 60;
-                  final startTimeStr = '${s.startedAt.hour.toString().padLeft(2, '0')}:${s.startedAt.minute.toString().padLeft(2, '0')}';
-                  
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: isDark ? Colors.white10 : Colors.black12, width: 0.5),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                s.scheduleTitle,
-                                style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+              if (_selectedDaySessions.isNotEmpty) ...[
+                Text(
+                  'Daftar Sesi Fokus (${_selectedDaySessions.length})',
+                  style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold, color: primaryColor),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _selectedDaySessions.length,
+                  itemBuilder: (context, index) {
+                    final s = _selectedDaySessions[index];
+                    final durationMin = (s.actualDurationSeconds > 0 && s.actualDurationSeconds < 60) ? 1 : s.actualDurationSeconds ~/ 60;
+                    final startTimeStr = '${s.startedAt.hour.toString().padLeft(2, '0')}:${s.startedAt.minute.toString().padLeft(2, '0')}';
+                    
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: isDark ? Colors.white10 : Colors.black12, width: 0.5),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  s.scheduleTitle,
+                                  style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    Icon(Icons.access_time_rounded, size: 12, color: Colors.grey[500]),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$startTimeStr • $durationMin Menit',
+                                      style: AppTypography.bodySmall.copyWith(color: Colors.grey[500]),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Badge Status Selesai
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                            decoration: BoxDecoration(
+                              color: s.isCompleted
+                                  ? (isDark ? Colors.green[950] : Colors.green[50])
+                                  : (isDark ? Colors.amber[950] : Colors.amber[50]),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: s.isCompleted ? Colors.green.withValues(alpha: 0.3) : Colors.amber.withValues(alpha: 0.3),
                               ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  Icon(Icons.access_time_rounded, size: 12, color: Colors.grey[500]),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '$startTimeStr • $durationMin Menit',
-                                    style: AppTypography.bodySmall.copyWith(color: Colors.grey[500]),
+                            ),
+                            child: Text(
+                              s.isCompleted ? 'Selesai' : 'Batal',
+                              style: AppTypography.bodySmall.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                                color: s.isCompleted ? Colors.green : Colors.amber,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+              if (_selectedDaySessions.isNotEmpty && _selectedDayTasks.isNotEmpty)
+                const SizedBox(height: AppSpacing.lg),
+              if (_selectedDayTasks.isNotEmpty) ...[
+                Text(
+                  'Tugas Selesai (${_selectedDayTasks.length})',
+                  style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold, color: primaryColor),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _selectedDayTasks.length,
+                  itemBuilder: (context, index) {
+                    final t = _selectedDayTasks[index];
+                    
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: isDark ? Colors.white10 : Colors.black12, width: 0.5),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 18,
+                                  color: Colors.green,
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        t.title,
+                                        style: AppTypography.bodyMedium.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          decoration: TextDecoration.lineThrough,
+                                          color: isDark ? Colors.white60 : Colors.black54,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (t.description != null && t.description!.isNotEmpty) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          t.description!,
+                                          style: AppTypography.bodySmall.copyWith(
+                                            color: Colors.grey[500],
+                                            decoration: TextDecoration.lineThrough,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ],
                                   ),
-                                ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Badge Status Selesai
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.green[950] : Colors.green[50],
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: Colors.green.withValues(alpha: 0.3),
                               ),
-                            ],
-                          ),
-                        ),
-                        // Badge Status Selesai
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
-                          decoration: BoxDecoration(
-                            color: s.isCompleted
-                                ? (isDark ? Colors.green[950] : Colors.green[50])
-                                : (isDark ? Colors.amber[950] : Colors.amber[50]),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: s.isCompleted ? Colors.green.withValues(alpha: 0.3) : Colors.amber.withValues(alpha: 0.3),
+                            ),
+                            child: Text(
+                              'Selesai',
+                              style: AppTypography.bodySmall.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                                color: Colors.green,
+                              ),
                             ),
                           ),
-                          child: Text(
-                            s.isCompleted ? 'Selesai' : 'Batal',
-                            style: AppTypography.bodySmall.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                              color: s.isCompleted ? Colors.green : Colors.amber,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
             ]
           ],
         ),
@@ -867,10 +975,9 @@ class _HeatmapDetailPageState extends ConsumerState<HeatmapDetailPage> {
 
   /// Widget Skeleton Loader premium untuk menggantikan CircularProgressIndicator
   Widget _buildSkeletonCard(BuildContext context, bool isDark) {
-    final baseColor = isDark ? Colors.grey[900]!.withOpacity(0.5) : Colors.grey[100]!.withOpacity(0.5);
+    final baseColor = isDark ? Colors.grey[900]!.withValues(alpha: 0.5) : Colors.grey[100]!.withValues(alpha: 0.5);
     final highlightColor = isDark ? Colors.grey[850]! : Colors.grey[200]!;
     final borderColor = isDark ? Colors.grey[850]! : Colors.grey[300]!;
-    final accentColor = isDark ? AppColors.darkPrimary.withOpacity(0.15) : AppColors.lightPrimary.withOpacity(0.15);
 
     return Container(
       height: 60,
@@ -901,7 +1008,7 @@ class _HeatmapDetailPageState extends ConsumerState<HeatmapDetailPage> {
                   width: 90,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: highlightColor.withOpacity(0.5),
+                    color: highlightColor.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

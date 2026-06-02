@@ -129,7 +129,7 @@ class FocusTimerPage extends ConsumerWidget {
                       boxShadow: [
                         BoxShadow(
                           color: (isDark ? AppColors.darkPrimary : AppColors.lightPrimary)
-                              .withOpacity(timerState.status == TimerStatus.running ? 0.06 : 0.01),
+                              .withValues(alpha: timerState.status == TimerStatus.running ? 0.06 : 0.01),
                           blurRadius: 40,
                           spreadRadius: 10,
                         ),
@@ -143,7 +143,7 @@ class FocusTimerPage extends ConsumerWidget {
                     child: CircularProgressIndicator(
                       value: progress,
                       strokeWidth: 6,
-                      backgroundColor: (isDark ? AppColors.darkOutline : AppColors.lightOutline).withOpacity(0.3),
+                      backgroundColor: (isDark ? AppColors.darkOutline : AppColors.lightOutline).withValues(alpha: 0.3),
                       valueColor: AlwaysStoppedAnimation<Color>(
                         isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
                       ),

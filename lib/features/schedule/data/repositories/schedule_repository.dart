@@ -46,6 +46,18 @@ class ScheduleRepository {
     schedule.durationMinutes =
         schedule.endTime.difference(schedule.startTime).inMinutes;
     schedule.updatedAt = DateTime.now();
+    
+    try {
+      final _ = schedule.createdAt;
+    } catch (_) {
+      final existing = await _isar.scheduleModels.get(schedule.id);
+      if (existing != null) {
+        schedule.createdAt = existing.createdAt;
+      } else {
+        schedule.createdAt = DateTime.now();
+      }
+    }
+    
     await _isar.writeTxn(() => _isar.scheduleModels.put(schedule));
   }
 

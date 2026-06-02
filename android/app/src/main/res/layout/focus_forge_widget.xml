@@ -13,26 +13,30 @@
         android:id="@+id/widget_col_left"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1.0"
+        android:layout_weight="1.2"
         android:gravity="center_vertical"
         android:orientation="vertical"
         android:paddingRight="8dp">
 
         <TextView
             android:id="@+id/widget_title"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="FocusForge"
+            android:singleLine="true"
+            android:ellipsize="end"
             android:textColor="#8095FF"
             android:textSize="16sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/widget_subtitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="Habit &amp; Focus"
+            android:singleLine="true"
+            android:ellipsize="end"
             android:textColor="#6C6E85"
             android:textSize="10sp" />
 
@@ -125,7 +129,7 @@
         android:id="@+id/widget_col_right"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1.4"
+        android:layout_weight="1.6"
         android:gravity="center_vertical"
         android:orientation="vertical"
         android:paddingLeft="12dp">

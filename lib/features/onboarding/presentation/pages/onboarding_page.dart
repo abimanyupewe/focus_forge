@@ -72,7 +72,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _slides[_currentPage].gradientColors[0].withOpacity(0.08),
+                color: _slides[_currentPage].gradientColors[0].withValues(alpha: 0.08),
               ),
             ).animate(target: _currentPage.toDouble()).custom(
               duration: 500.ms,
@@ -105,15 +105,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            slide.gradientColors[0].withOpacity(0.08),
-                            slide.gradientColors[1].withOpacity(0.15),
+                            slide.gradientColors[0].withValues(alpha: 0.08),
+                            slide.gradientColors[1].withValues(alpha: 0.15),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isDark ? AppColors.darkPrimary.withOpacity(0.2) : AppColors.lightPrimary.withOpacity(0.2),
+                          color: isDark ? AppColors.darkPrimary.withValues(alpha: 0.2) : AppColors.lightPrimary.withValues(alpha: 0.2),
                           width: 1,
                         ),
                       ),
@@ -122,7 +122,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           width: 90,
                           height: 90,
                           decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkPrimary.withOpacity(0.05) : AppColors.lightPrimary.withOpacity(0.05),
+                            color: isDark ? AppColors.darkPrimary.withValues(alpha: 0.05) : AppColors.lightPrimary.withValues(alpha: 0.05),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(

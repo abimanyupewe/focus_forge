@@ -547,7 +547,7 @@ class DashboardPage extends ConsumerWidget {
     final baseColor = isDark ? Colors.grey[900]! : Colors.grey[100]!;
     final highlightColor = isDark ? Colors.grey[850]! : Colors.grey[200]!;
     final borderColor = isDark ? Colors.grey[850]! : Colors.grey[300]!;
-    final accentColor = isDark ? AppColors.darkPrimary.withOpacity(0.15) : AppColors.lightPrimary.withOpacity(0.15);
+    final accentColor = isDark ? AppColors.darkPrimary.withValues(alpha: 0.15) : AppColors.lightPrimary.withValues(alpha: 0.15);
 
     return Card(
       elevation: 0,
@@ -594,7 +594,7 @@ class DashboardPage extends ConsumerWidget {
                     width: 85,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: highlightColor.withOpacity(0.5),
+                      color: highlightColor.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -680,43 +680,9 @@ class DashboardPage extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
               child: Row(
                 children: [
-                  // Checklist Kotak Kurang Bulat Premium (Indikator Status Selesai)
                   GestureDetector(
                     onTap: () {
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              Icon(
-                                Icons.timer_outlined,
-                                color: isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
-                              ),
-                              const SizedBox(width: AppSpacing.md),
-                              Expanded(
-                                child: Text(
-                                  'Jadwal ini diselesaikan otomatis dengan menjalankan sesi timer belajar Anda.',
-                                  style: TextStyle(
-                                    fontFamily: 'Outfit',
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: BorderSide(
-                              color: isDark ? Colors.grey[850]! : Colors.grey[300]!,
-                              width: 1,
-                            ),
-                          ),
-                          backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                          duration: const Duration(seconds: 3),
-                        ),
-                      );
+                      notifier.toggleCompleteSchedule(schedule);
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 250),
@@ -923,7 +889,7 @@ class DashboardPage extends ConsumerWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -1003,7 +969,7 @@ class DashboardPage extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03),
+                          color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isDark ? Colors.white10 : Colors.black12,
@@ -1048,7 +1014,7 @@ class DashboardPage extends ConsumerWidget {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: color.withOpacity(0.15),
+                                    color: color.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -1109,7 +1075,7 @@ class DashboardPage extends ConsumerWidget {
                               shape: BoxShape.circle,
                               color: isActive
                                   ? color
-                                  : (isDark ? Colors.white10 : Colors.black.withOpacity(0.05)),
+                                  : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
                               border: isActive
                                   ? null
                                   : Border.all(
@@ -2224,7 +2190,7 @@ class _TaskFormState extends State<_TaskForm> {
     super.initState();
     _titleController = TextEditingController(text: widget.task?.title ?? '');
     _descController = TextEditingController(text: widget.task?.description ?? '');
-    _selectedColor = AppColors.categoryColors[0];
+    _selectedColor = widget.task != null ? Color(widget.task!.colorValue) : AppColors.categoryColors[0];
     _selectedDate = widget.task?.createdAt ?? DateTime.now();
   }
 
